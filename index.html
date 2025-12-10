@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IELTS Writing Simulation</title>
+  <!-- Lux, modern style: variable fonts + subtle glass, gold accents -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f1115;
+      --surface: #151822cc;
+      --surface-opaque: #151822;
+      --text: #e6e6ea;
+      --muted: #b6b8c3;
+      --accent: #d3af37; /* soft gold */
+      --accent-2: #7fd1b9; /* subtle mint */
+      --outline: #242834;
+      --success: #52c77e;
+      --danger: #ff6464;
+      --shadow: 0 20px 60px rgba(0,0,0,0.5);
+      --radius-xl: 18px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --glass: blur(12px);
+    }
+    .light {
+      --bg: #f5f6fa;
+      --surface: #ffffffb3;
+      --surface-opaque: #ffffff;
+      --text: #1d2230;
+      --muted: #51576d;
+      --accent: #b28a24;   /* richer gold for light theme */
+      --accent-2: #2aa88a;
+      --outline: #e6e8ef;
+      --shadow: 0 12px 36px rgba(17, 22, 35, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(211, 175, 55, 0.12), transparent 60%),
+        radial-gradient(800px 500px at -20% 110%, rgba(127, 209, 185, 0.18), transparent 65%),
+        linear-gradient(180deg, var(--bg), var(--bg));
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Layout */
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #f0e4b2);
+      box-shadow: 0 8px 24px rgba(211,175,55,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .logo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(180px 80px at 120% -20%, rgba(255,255,255,0.55), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.28), transparent);
+      mix-blend-mode: screen;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 1.3rem;
+      letter-spacing: 0.2px;
+    }
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      backdrop-filter: var(--glass);
+      cursor: pointer;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      transition: transform 0.1s ease, background 0.3s ease, border-color 0.3s ease;
+    }
+    .theme-toggle:hover { transform: translateY(-1px); }
+    .theme-toggle .dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #f0e4b2);
+      box-shadow: 0 4px 14px rgba(211,175,55,0.45);
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-xl);
+      backdrop-filter: var(--glass);
+      box-shadow: var(--shadow);
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--outline);
+    }
+    .panel-title {
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .panel-body {
+      padding: 18px 20px;
+    }
+
+    /* Controls bar */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .btn,
+    .timer {
+      padding: 12px 14px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-md);
+      background: var(--surface-opaque);
+      color: var(--text);
+      backdrop-filter: var(--glass);
+    }
+    .select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-md);
+      background: var(--accent-2);
+      color: var(--text);
+      backdrop-filter: var(--glass);
+    }
+    .select select {
+      width: 100%;
+      background: var(--glass);
+      color: var(--bg);
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+    }
+    .btn {
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.3s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent), #f0e4b2);
+      color: #1b1b1b;
+      font-weight: 600;
+      box-shadow: 0 10px 26px rgba(211,175,55,0.35);
+    }
+    .btn.ghost {
+      background: var(--surface);
+    }
+    .btn.success {
+      background: linear-gradient(135deg, var(--success), #9de6bc);
+      color: #0f2b1e;
+      border-color: transparent;
+      box-shadow: 0 10px 26px rgba(82,199,126,0.28);
+      font-weight: 600;
+    }
+    .btn.danger {
+      background: linear-gradient(135deg, var(--danger), #ffc2c2);
+      color: #3b0b0b;
+      border-color: transparent;
+      box-shadow: 0 10px 26px rgba(255,100,100,0.28);
+      font-weight: 600;
+    }
+
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+    .timer .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 0 6px rgba(127,209,185,0.12);
+    }
+
+    /* Prompt and editor */
+    .prompt {
+      padding: 16px;
+      border: 1px dashed var(--outline);
+      border-radius: var(--radius-md);
+      color: var(--muted);
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+    }
+    .editor {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      padding: 16px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      background: var(--surface-opaque);
+      color: var(--text);
+      outline: none;
+      font-size: 1rem;
+      line-height: 1.6;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--outline);
+      border-radius: 999px;
+      background: var(--surface);
+      backdrop-filter: var(--glass);
+    }
+    .stat-pill .value {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .modal {
+        position: fixed;
+        top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.5);
+        display:flex; align-items:center; justify-content:center;
+        }
+    .modal-content {
+        background:var(--text); padding:20px; border-radius:8px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.3);
+        }
+
+    /* Footer */
+    .footer {
+      margin-top: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 720px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      .footer {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="title">IELTS Writing Simulation</div>
+          <div class="subtitle">Task 1 & Task 2 with timing, word count, and autosave</div>
+        </div>
+      </div>
+
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle light/dark">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Light/Dark</span>
+      </button>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Exam controls</div>
+        <div style="display:flex; gap:8px;">
+          <!-- <button class="btn ghost" id="loadSample">Load sample</button> -->
+          <button class="btn danger" id="resetAll">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="controls">
+          <div class="select">
+            <select id="taskType">
+              <option value="task1">Task 1 </option>
+              <!-- <option value="task1gt">Task 1 (General Training) — Formal/Informal letter</option> -->
+              <option value="task2">Task 2 </option>
+            </select>
+          </div>
+          <div class="timer" id="timer">
+            <span class="dot"></span>
+            <span id="timeLabel">00:00</span>
+          </div>
+          <button class="btn primary" id="startTimer">Start</button>
+          <button class="btn" id="pauseTimer">Pause</button>
+          <div class="timer" id="stopwatch">
+            <span class="dot"></span>
+            <span id="stopwatchLabel">00:00</span>
+            </div>
+                <button class="btn primary" id="startStopwatch">Start Stopwatch</button>
+                <button class="btn" id="pauseStopwatch">Pause Stopwatch</button>
+                <button class="btn danger" id="resetStopwatch">Reset Stopwatch</button>
+            </div>
+
+        <div class="prompt" id="prompt">
+          Select a task to view the prompt. Then start the timer and begin writing.
+        </div>
+
+        <div class="editor">
+          <textarea id="editor" placeholder="Begin your response here…"></textarea>
+
+          <div class="stats">
+            <div class="stat-pill">
+              <span>Words:</span>
+              <span class="value" id="wordCount">0</span>
+            </div>
+            <div class="stat-pill">
+              <span>Characters:</span>
+              <span class="value" id="charCount">0</span>
+            </div>
+            <div class="stat-pill">
+              <span>Paragraphs:</span>
+              <span class="value" id="paraCount">0</span>
+            </div>
+            <div class="stat-pill">
+              <span>Saved:</span>
+              <span class="value" id="saveStatus">• autosaved</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <button class="btn success" id="exportText">Export text</button>
+            <button class="btn" id="clearText">Clear text</button>
+          </div>
+          <div id="exportModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h3 style="color: var(--bg);">Select export format</h3>
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+                <button class="btn success" id="choosePDF">PDF</button>
+                <button class="btn success" id="chooseWord">Word</button>
+                <button class="btn danger" id="closeModal">Cancel</button>
+                </div>
+            </div>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div>For education</div>
+      <div>sonoflnw007</div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggling with persistence
+    const themeToggle = document.getElementById('themeToggle');
+    const prefersLight = localStorage.getItem('theme') === 'light';
+    if (prefersLight) document.body.classList.add('light');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+    });
+
+    // Elements
+    const taskType = document.getElementById('taskType');
+    const promptEl = document.getElementById('prompt');
+    const editor = document.getElementById('editor');
+    const wordCountEl = document.getElementById('wordCount');
+    const charCountEl = document.getElementById('charCount');
+    const paraCountEl = document.getElementById('paraCount');
+    const saveStatusEl = document.getElementById('saveStatus');
+
+    const startTimerBtn = document.getElementById('startTimer');
+    const pauseTimerBtn = document.getElementById('pauseTimer');
+    const timerLabel = document.getElementById('timeLabel');
+    const timerBox = document.getElementById('timer');
+
+    const loadSampleBtn = document.getElementById('loadSample');
+    const resetAllBtn = document.getElementById('resetAll');
+    const exportTextBtn = document.getElementById('exportText');
+    const clearTextBtn = document.getElementById('clearText');
+
+    // Prompts library
+    const prompts = {
+      task1: {
+        text: `You should spend about 20 minutes on this task.`,
+
+        minutes: 20
+      },
+      task2: {
+        text: `You should spend about 40 minutes on this task.`,
+        minutes: 40
+      }
+    };
+
+    // Load prompt and set timer preset
+    function loadPrompt() {
+      const key = taskType.value;
+      const p = prompts[key];
+      promptEl.textContent = p.text;
+      setTimer(p.minutes * 60);
+      // Load autosaved text for this task
+      const saved = localStorage.getItem('ielts_' + key) || '';
+      editor.value = saved;
+      updateStats();
+      setSaveStatus('• autosaved');
+    }
+
+    taskType.addEventListener('change', loadPrompt);
+
+    // Word/char/para stats
+    function updateStats() {
+      const text = editor.value.trim();
+      const words = text ? text.split(/\s+/).filter(Boolean) : [];
+      const paras = text ? text.split(/\n{2,}/).filter(p => p.trim().length > 0) : [];
+      wordCountEl.textContent = words.length;
+      charCountEl.textContent = text.length;
+      paraCountEl.textContent = paras.length;
+    }
+    editor.addEventListener('input', () => {
+      updateStats();
+      // autosave per task
+      const key = taskType.value;
+      localStorage.setItem('ielts_' + key, editor.value);
+      setSaveStatus('• autosaved');
+    });
+
+    function setSaveStatus(text) {
+      saveStatusEl.textContent = text;
+    }
+
+    // Timer logic
+    let countdown = 0;
+    let ticking = false;
+    let timerId = null;
+
+    function setTimer(seconds) {
+      countdown = seconds;
+      renderTime();
+      timerBox.style.borderColor = 'var(--outline)';
+    }
+
+    function renderTime() {
+      const m = Math.floor(countdown / 60);
+      const s = countdown % 60;
+      timerLabel.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function tick() {
+      if (countdown <= 0) {
+        clearInterval(timerId);
+        ticking = false;
+        timerBox.style.borderColor = 'var(--danger)';
+        timerLabel.textContent = '00:00';
+        return;
+      }
+      countdown -= 1;
+      renderTime();
+    }
+
+    startTimerBtn.addEventListener('click', () => {
+      if (ticking) return;
+      ticking = true;
+      timerBox.style.borderColor = 'var(--accent-2)';
+      timerId = setInterval(tick, 1000);
+    });
+
+    pauseTimerBtn.addEventListener('click', () => {
+      if (!ticking) return;
+      clearInterval(timerId);
+      ticking = false;
+      timerBox.style.borderColor = 'var(--outline)';
+    });
+
+    //stopwatch
+    let stopwatchMs = 0;
+    let stopwatchRunning = false;
+    let stopwatchId = null;
+
+    function renderStopwatch() {
+    const m = Math.floor(stopwatchMs / 60000);              // minutes
+    const s = Math.floor((stopwatchMs % 60000) / 1000);     // seconds
+    const ms = Math.floor((stopwatchMs % 1000) / 10);       // hundredths
+    document.getElementById('stopwatchLabel').textContent =
+        `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+    }
+
+    document.getElementById('startStopwatch').addEventListener('click', () => {
+    if (stopwatchRunning) return;
+    stopwatchRunning = true;
+    stopwatchId = setInterval(() => {
+        stopwatchMs += 10;   // increase by 10 ms
+        renderStopwatch();
+    }, 10);                // update every 10 ms
+    });
+
+    document.getElementById('pauseStopwatch').addEventListener('click', () => {
+    clearInterval(stopwatchId);
+    stopwatchRunning = false;
+    });
+
+    document.getElementById('resetStopwatch').addEventListener('click', () => {
+    clearInterval(stopwatchId);
+    stopwatchRunning = false;
+    stopwatchMs = 0;
+    renderStopwatch();
+    });
+
+    // Export text
+    const exportModal = document.getElementById('exportModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const choosePDFBtn = document.getElementById('choosePDF');
+    const chooseWordBtn = document.getElementById('chooseWord');
+
+    // Show popup when clicking Export Text
+    exportTextBtn.addEventListener('click', () => {
+    exportModal.style.display = 'flex';
+    });
+
+    // Close modal
+    closeModalBtn.addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    });
+
+    // Export PDF
+    choosePDFBtn.addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFont("times", "normal");
+      doc.setFontSize(12);
+
+      // Wrap text to fit page width
+      const lines = doc.splitTextToSize(editor.value, 180);
+      doc.text(lines, 10, 10);
+
+      doc.save(`IELTS_${taskType.value}_${new Date().toISOString().slice(0,10)}.pdf`);
+      setSaveStatus('• exported PDF');
+      exportModal.style.display = 'none';
+    });
+
+    // Export Word
+    chooseWordBtn.addEventListener('click', () => {
+    const blob = new Blob([`\ufeff${editor.value}`], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `IELTS_${taskType.value}_${new Date().toISOString().slice(0,10)}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setSaveStatus('• exported Word');
+    exportModal.style.display = 'none';
+    });
+
+    // Clear text
+    clearTextBtn.addEventListener('click', () => {
+      if (!confirm('Clear current response? This cannot be undone.')) return;
+      editor.value = '';
+      updateStats();
+      localStorage.removeItem('ielts_' + taskType.value);
+      setSaveStatus('• cleared');
+    });
+
+    // Reset all: timer, text, localStorage entries
+    resetAllBtn.addEventListener('click', () => {
+      if (!confirm('Reset everything? This will clear all saved responses for all tasks.')) return;
+      Object.keys(prompts).forEach(k => localStorage.removeItem('ielts_' + k));
+      clearInterval(timerId);
+      ticking = false;
+      loadPrompt();
+      setSaveStatus('• reset');
+    });
+
+    // On load
+    loadPrompt();
+  </script>
+</body>
+</html>
