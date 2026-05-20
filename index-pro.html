@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IELTS Writing — Computer-Delivered Practice</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      /* IELTS-inspired palette, refined */
+      --bg: #eef2f7;
+      --bg-grad-1: #e7eef7;
+      --bg-grad-2: #f4f1ea;
+      --panel: #ffffff;
+      --panel-2: #fbfcfe;
+      --ink: #1a2233;
+      --ink-soft: #4a5468;
+      --muted: #8893a7;
+      --line: #d9dfe8;
+      --line-soft: #ebeef4;
+      --brand: #0b3b6f;       /* IELTS deep navy */
+      --brand-2: #1559a3;     /* lighter navy */
+      --accent: #b8860b;      /* refined gold */
+      --accent-soft: #f3e6c0;
+      --mint: #2a9d8f;
+      --rose: #c0392b;
+      --warn: #d97706;
+      --ok: #2a9d8f;
+      --shadow-sm: 0 1px 2px rgba(15, 30, 60, 0.06), 0 2px 6px rgba(15, 30, 60, 0.05);
+      --shadow-md: 0 6px 18px rgba(15, 30, 60, 0.08);
+      --shadow-lg: 0 20px 50px rgba(15, 30, 60, 0.12);
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+    }
+    body.dark {
+      --bg: #0e131c;
+      --bg-grad-1: #0b1320;
+      --bg-grad-2: #131a26;
+      --panel: #161d2a;
+      --panel-2: #1b2331;
+      --ink: #e9edf5;
+      --ink-soft: #b9c1d2;
+      --muted: #7a8499;
+      --line: #29324a;
+      --line-soft: #1f2738;
+      --brand: #1559a3;
+      --brand-2: #2b76c9;
+      --accent: #e7c065;
+      --accent-soft: #3a3216;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+      --shadow-md: 0 8px 22px rgba(0,0,0,0.45);
+      --shadow-lg: 0 24px 60px rgba(0,0,0,0.55);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(21, 89, 163, 0.10), transparent 60%),
+        radial-gradient(700px 500px at 100% 110%, rgba(184, 134, 11, 0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ===== Top status bar (mimics official IELTS computer-delivered test) ===== */
+    .topbar {
+      background: linear-gradient(180deg, var(--brand), var(--brand-2));
+      color: #fff;
+      padding: 10px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .crest {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background:
+        radial-gradient(circle at 30% 30%, #fff7d6, var(--accent) 70%);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.4);
+      display: grid; place-items: center;
+      color: #4a3700;
+      font-weight: 700;
+      font-family: "Source Serif 4", serif;
+      font-size: 1rem;
+    }
+    .top-title {
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .top-title small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 1px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #b8e6d8;
+      box-shadow: 0 0 0 4px rgba(184, 230, 216, 0.2);
+    }
+    .pill.warn .dot { background: #ffd479; box-shadow: 0 0 0 4px rgba(255,212,121,0.2); }
+    .pill.danger .dot { background: #ff8a8a; box-shadow: 0 0 0 4px rgba(255,138,138,0.2); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+    .top-time { font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: 0.4px; }
+
+    .icon-btn {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.20); }
+    .icon-btn:active { transform: translateY(1px); }
+
+    /* ===== Sub bar (task selector + helpers) ===== */
+    .subbar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 22px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .control-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-2);
+    }
+    .control-group .label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-right: 4px;
+      border-right: 1px solid var(--line);
+      margin-right: 4px;
+    }
+    .vrule { width: 1px; height: 26px; background: var(--line); margin: 0 2px; }
+    .seg {
+      display: inline-flex;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .seg button {
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.18s ease;
+    }
+    .seg button.active {
+      background: linear-gradient(180deg, var(--brand-2), var(--brand));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(11, 59, 111, 0.3);
+    }
+    .seg button:hover:not(.active) { background: var(--line-soft); color: var(--ink); }
+
+    .subbar .spacer { flex: 1; }
+    .mini-btn {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .mini-btn:hover { border-color: var(--brand-2); color: var(--brand-2); }
+    .mini-btn.primary {
+      background: linear-gradient(180deg, var(--brand-2), var(--brand));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(11,59,111,0.25);
+    }
+    .mini-btn.primary:hover { color: #fff; filter: brightness(1.05); }
+    .mini-btn.gold {
+      background: linear-gradient(180deg, #d9a740, var(--accent));
+      color: #2a1f00;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(184,134,11,0.3);
+    }
+    .mini-btn.danger { color: var(--rose); border-color: #f3c8c4; }
+    .mini-btn.danger:hover { background: #fff1ef; }
+    body.dark .mini-btn.danger { border-color: #5a2222; background: transparent; }
+    body.dark .mini-btn.danger:hover { background: #2a1414; }
+    .mini-btn.ghost-mint {
+      background: rgba(42,157,143,0.08);
+      border-color: rgba(42,157,143,0.35);
+      color: var(--mint);
+    }
+    .mini-btn.ghost-mint:hover { background: rgba(42,157,143,0.16); color: var(--mint); }
+    .mini-btn.sm { padding: 6px 10px; font-size: 0.8rem; }
+
+    /* ===== Main split layout ===== */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px;
+      gap: 18px;
+    }
+    .pane {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .pane-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pane-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pane-title::before {
+      content: "";
+      width: 4px; height: 18px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent), #e8c66b);
+    }
+    .pane-meta { font-size: 0.8rem; color: var(--muted); }
+    .pane-body { padding: 18px; flex: 1; overflow: auto; }
+
+    /* Answer pane / editor */
+    .editor-wrap {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    textarea#editor {
+      width: 100%;
+      flex: 1;
+      min-height: 380px;
+      padding: 18px 20px;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 1.02rem;
+      line-height: 1.75;
+      resize: none;
+      caret-color: var(--brand-2);
+    }
+    textarea#editor::placeholder { color: var(--muted); font-style: italic; }
+
+    .editor-footer {
+      border-top: 1px solid var(--line-soft);
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--panel-2);
+    }
+    .stat {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .stat b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+    .stat.target b.ok { color: var(--ok); }
+    .stat.target b.short { color: var(--warn); }
+    .save-indicator {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .save-indicator .blip {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(42,157,143,0.15);
+    }
+
+    /* ===== Bottom action bar — like IELTS test footer ===== */
+    .footerbar {
+      background: var(--panel);
+      border-top: 1px solid var(--line);
+      padding: 12px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 -4px 14px rgba(15,30,60,0.04);
+    }
+    .footer-left, .footer-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .footer-right { margin-left: auto; }
+    .footer-brand {
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      font-style: italic;
+    }
+    .footer-brand b { color: var(--brand-2); font-style: normal; font-weight: 600; }
+
+    /* Modal — refined */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(10,20,40,0.55);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.18s ease;
+    }
+    .modal.open { display: flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .modal-card {
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: var(--r-lg);
+      padding: 22px 24px;
+      width: 360px;
+      max-width: calc(100vw - 32px);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--line);
+      animation: pop 0.2s ease;
+    }
+    @keyframes pop { from{transform:scale(.95);opacity:0} to{transform:scale(1);opacity:1} }
+    .modal-card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .modal-card p { margin: 0 0 16px; color: var(--ink-soft); font-size: 0.9rem; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--ink);
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .check-row:hover { border-color: var(--brand-2); }
+    .check-row input { margin-top: 2px; accent-color: var(--brand-2); }
+    .copy-result {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--ok);
+      min-height: 1.2em;
+      text-align: right;
+    }
+    .copy-result.err { color: var(--rose); }
+
+    /* Motivational ribbon */
+    .ribbon {
+      background: linear-gradient(90deg, rgba(184,134,11,0.10), rgba(21,89,163,0.10));
+      border-bottom: 1px solid var(--line-soft);
+      padding: 8px 22px;
+      font-size: 0.83rem;
+      color: var(--ink-soft);
+      text-align: center;
+    }
+    .ribbon b { color: var(--brand); }
+    body.dark .ribbon b { color: var(--brand-2); }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .main { grid-template-columns: 1fr; }
+      .pane-body { max-height: none; }
+      textarea#editor { min-height: 280px; }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 10px 14px; }
+      .subbar { padding: 10px 14px; }
+      .footerbar { padding: 10px 14px; }
+      .top-title { font-size: 0.9rem; }
+      .pill { padding: 6px 10px; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== TOP BAR (status / candidate / countdown) ===== -->
+  <div class="topbar" role="banner">
+    <div class="topbar-left">
+      <div class="crest" aria-hidden="true">IE</div>
+      <div class="top-title">
+        IELTS — Academic Writing
+        <small>Computer-delivered practice session</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill" id="statusPill" title="Session status">
+        <span class="dot"></span><span id="statusText">Ready</span>
+      </span>
+      <span class="pill" id="countdownPill" title="Remaining time">
+        <span class="dot"></span><span class="top-time" id="timeLabel">00:00</span>
+      </span>
+      <span class="pill" id="stopwatchPill" title="Elapsed">
+        <span class="dot" style="background:#cdd9ff;box-shadow:0 0 0 4px rgba(205,217,255,0.2)"></span>
+        <span class="top-time" id="stopwatchLabel">00:00.00</span>
+      </span>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">Dark</button>
+    </div>
+  </div>
+
+  <!-- ===== Motivational ribbon ===== -->
+  <div class="ribbon">
+    Consistency beats intensity. Today's date: <b id="todayDate"></b>
+  </div>
+
+  <!-- ===== SUB BAR (task selector + timer controls) ===== -->
+  <div class="subbar">
+    <div class="seg" role="tablist" aria-label="Task selector">
+      <button id="tabTask1" class="active" data-task="task1" role="tab">Task 1</button>
+      <button id="tabTask2" data-task="task2" role="tab">Task 2</button>
+    </div>
+
+    <div class="control-group" role="group" aria-label="Countdown">
+      <span class="label">Countdown</span>
+      <button class="mini-btn primary sm" id="startTimer" title="Start countdown">▶ Start</button>
+      <button class="mini-btn sm" id="pauseTimer" title="Pause countdown">❚❚ Pause</button>
+    </div>
+
+    <div class="control-group" role="group" aria-label="Stopwatch">
+      <span class="label">Stopwatch</span>
+      <button class="mini-btn ghost-mint sm" id="startStopwatch" title="Start stopwatch">▶ Start</button>
+      <button class="mini-btn sm" id="pauseStopwatch" title="Pause stopwatch">❚❚ Pause</button>
+      <button class="mini-btn sm" id="resetStopwatch" title="Reset stopwatch">⟲ Reset</button>
+    </div>
+
+    <span class="spacer"></span>
+
+    <button class="mini-btn" id="copyText" title="Copy response to clipboard">⧉ Copy</button>
+    <button class="mini-btn gold" id="exportText" title="Export to PDF or Word">⤓ Export</button>
+    <button class="mini-btn danger" id="resetAll" title="Reset countdown, stopwatch, and both saved responses">⟲ Reset all</button>
+  </div>
+
+  <!-- ===== MAIN (response only) ===== -->
+  <main class="main">
+    <!-- Answer pane -->
+    <section class="pane" aria-labelledby="aTitle">
+      <div class="pane-header">
+        <div class="pane-title" id="aTitle">Your response</div>
+        <div class="pane-meta" id="targetMeta">Target: 150+ words</div>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="editor" placeholder="Begin your response here…" spellcheck="false" autocorrect="off" autocomplete="off"></textarea>
+        <div class="editor-footer">
+          <span class="stat target"><span>Words</span><b id="wordCount" class="short">0</b></span>
+          <span class="stat"><span>Characters</span><b id="charCount">0</b></span>
+          <span class="stat"><span>Paragraphs</span><b id="paraCount">0</b></span>
+          <span class="save-indicator"><span class="blip"></span><span id="saveStatus">autosaved</span></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== BOTTOM ACTION BAR ===== -->
+  <div class="footerbar">
+    <div class="footer-left">
+      <button class="mini-btn" id="clearText" title="Wipe only the current task's response">Clear response</button>
+    </div>
+    <div class="footer-right">
+      <span class="footer-brand">For education · sonoflnw007</span>
+    </div>
+  </div>
+
+  <!-- ===== EXPORT MODAL ===== -->
+  <div class="modal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <div class="modal-card">
+      <h3 id="exportTitle">Export your response</h3>
+      <p>Choose a format. Your response will be saved to your device.</p>
+      <div class="modal-actions">
+        <button class="mini-btn" id="closeModal">Cancel</button>
+        <button class="mini-btn primary" id="chooseWord">Word (.doc)</button>
+        <button class="mini-btn gold" id="choosePDF">PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COPY MODAL ===== -->
+  <div class="modal" id="copyModal" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+    <div class="modal-card">
+      <h3 id="copyTitle">Copy your response</h3>
+      <p>Copy your text to the clipboard. Optionally prepend a prompt so an AI can rate your band and CEFR level.</p>
+      <label class="check-row">
+        <input type="checkbox" id="includeAIPrompt" />
+        <span>Include AI evaluation prompt (IELTS band + CEFR)</span>
+      </label>
+      <div class="modal-actions">
+        <button class="mini-btn" id="closeCopyModal">Cancel</button>
+        <button class="mini-btn primary" id="doCopy">⧉ Copy to clipboard</button>
+      </div>
+      <div class="copy-result" id="copyResult"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Theme =====
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme-pro');
+    if (savedTheme === 'dark') { document.body.classList.add('dark'); themeToggle.textContent = 'Light'; }
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const dark = document.body.classList.contains('dark');
+      themeToggle.textContent = dark ? 'Light' : 'Dark';
+      localStorage.setItem('theme-pro', dark ? 'dark' : 'light');
+    });
+
+    // ===== Today's date =====
+    document.getElementById('todayDate').textContent =
+      new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    // ===== Elements =====
+    const targetMeta = document.getElementById('targetMeta');
+    const editor = document.getElementById('editor');
+    const wordCountEl = document.getElementById('wordCount');
+    const charCountEl = document.getElementById('charCount');
+    const paraCountEl = document.getElementById('paraCount');
+    const saveStatusEl = document.getElementById('saveStatus');
+    const statusText = document.getElementById('statusText');
+    const statusPill = document.getElementById('statusPill');
+    const countdownPill = document.getElementById('countdownPill');
+
+    const startTimerBtn = document.getElementById('startTimer');
+    const pauseTimerBtn = document.getElementById('pauseTimer');
+    const timerLabel = document.getElementById('timeLabel');
+
+    const resetAllBtn = document.getElementById('resetAll');
+    const exportTextBtn = document.getElementById('exportText');
+    const copyTextBtn = document.getElementById('copyText');
+    const clearTextBtn = document.getElementById('clearText');
+
+    // ===== Task config =====
+    const prompts = {
+      task1: { minutes: 20, target: 150 },
+      task2: { minutes: 40, target: 250 }
+    };
+
+    let currentTask = 'task1';
+
+    function loadTask(task) {
+      currentTask = task;
+      document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.task === task));
+      targetMeta.textContent = `Target: ${prompts[task].target}+ words`;
+      setTimer(prompts[task].minutes * 60);
+      const saved = localStorage.getItem('ielts_pro_' + task) || '';
+      editor.value = saved;
+      updateStats();
+      setSaveStatus('autosaved');
+    }
+
+    document.querySelectorAll('.seg button').forEach(b => {
+      b.addEventListener('click', () => loadTask(b.dataset.task));
+    });
+
+    // ===== Stats =====
+    function updateStats() {
+      const text = editor.value.trim();
+      const words = text ? text.split(/\s+/).filter(Boolean) : [];
+      const paras = text ? text.split(/\n{2,}/).filter(p => p.trim().length > 0) : [];
+      wordCountEl.textContent = words.length;
+      charCountEl.textContent = text.length;
+      paraCountEl.textContent = paras.length;
+      const target = prompts[currentTask].target;
+      wordCountEl.classList.toggle('ok', words.length >= target);
+      wordCountEl.classList.toggle('short', words.length < target);
+    }
+    editor.addEventListener('input', () => {
+      updateStats();
+      localStorage.setItem('ielts_pro_' + currentTask, editor.value);
+      setSaveStatus('autosaved');
+    });
+
+    function setSaveStatus(text) { saveStatusEl.textContent = text; }
+
+    // ===== Countdown timer =====
+    let countdown = 0;
+    let ticking = false;
+    let timerId = null;
+
+    function setTimer(seconds) {
+      countdown = seconds;
+      renderTime();
+      countdownPill.classList.remove('warn','danger');
+      setStatus('Ready');
+    }
+    function renderTime() {
+      const m = Math.floor(countdown / 60);
+      const s = countdown % 60;
+      timerLabel.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    function tick() {
+      if (countdown <= 0) {
+        clearInterval(timerId); ticking = false;
+        countdownPill.classList.remove('warn'); countdownPill.classList.add('danger');
+        setStatus("Time's up");
+        timerLabel.textContent = '00:00';
+        return;
+      }
+      countdown -= 1;
+      if (countdown <= 60) countdownPill.classList.add('danger');
+      else if (countdown <= 300) countdownPill.classList.add('warn');
+      renderTime();
+    }
+    function setStatus(t) { statusText.textContent = t; }
+
+    startTimerBtn.addEventListener('click', () => {
+      if (ticking) return;
+      ticking = true;
+      setStatus('Writing');
+      timerId = setInterval(tick, 1000);
+    });
+    pauseTimerBtn.addEventListener('click', () => {
+      if (!ticking) return;
+      clearInterval(timerId); ticking = false;
+      setStatus('Paused');
+    });
+
+    // ===== Stopwatch =====
+    let stopwatchMs = 0;
+    let stopwatchRunning = false;
+    let stopwatchId = null;
+    function renderStopwatch() {
+      const m = Math.floor(stopwatchMs / 60000);
+      const s = Math.floor((stopwatchMs % 60000) / 1000);
+      const ms = Math.floor((stopwatchMs % 1000) / 10);
+      document.getElementById('stopwatchLabel').textContent =
+        `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+    }
+    document.getElementById('startStopwatch').addEventListener('click', () => {
+      if (stopwatchRunning) return;
+      stopwatchRunning = true;
+      stopwatchId = setInterval(() => { stopwatchMs += 10; renderStopwatch(); }, 10);
+    });
+    document.getElementById('pauseStopwatch').addEventListener('click', () => {
+      clearInterval(stopwatchId); stopwatchRunning = false;
+    });
+    document.getElementById('resetStopwatch').addEventListener('click', () => {
+      clearInterval(stopwatchId); stopwatchRunning = false; stopwatchMs = 0; renderStopwatch();
+    });
+
+    // ===== Export modal =====
+    const exportModal = document.getElementById('exportModal');
+    document.getElementById('closeModal').addEventListener('click', () => exportModal.classList.remove('open'));
+    exportTextBtn.addEventListener('click', () => exportModal.classList.add('open'));
+    exportModal.addEventListener('click', (e) => { if (e.target === exportModal) exportModal.classList.remove('open'); });
+
+    document.getElementById('choosePDF').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont('times', 'normal');
+      doc.setFontSize(12);
+      doc.text(`IELTS Writing — ${currentTask.toUpperCase()}`, 10, 12);
+      doc.setFontSize(11);
+      const lines = doc.splitTextToSize(editor.value || '(empty)', 180);
+      doc.text(lines, 10, 22);
+      doc.save(`IELTS_${currentTask}_${new Date().toISOString().slice(0,10)}.pdf`);
+      setSaveStatus('exported PDF');
+      exportModal.classList.remove('open');
+    });
+    document.getElementById('chooseWord').addEventListener('click', () => {
+      const blob = new Blob([`﻿${editor.value}`], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `IELTS_${currentTask}_${new Date().toISOString().slice(0,10)}.doc`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      setSaveStatus('exported Word');
+      exportModal.classList.remove('open');
+    });
+
+    // ===== Copy modal =====
+    const copyModal = document.getElementById('copyModal');
+    const includeAIPrompt = document.getElementById('includeAIPrompt');
+    const copyResult = document.getElementById('copyResult');
+    const closeCopyModalBtn = document.getElementById('closeCopyModal');
+
+    const AI_PROMPT_TEMPLATE = (taskLabel, target) =>
+`You are an experienced IELTS examiner. Evaluate the following ${taskLabel} response (target: ${target}+ words).
+
+Provide:
+1. Estimated IELTS band score (0–9), with a breakdown for:
+   • Task Achievement / Response
+   • Coherence and Cohesion
+   • Lexical Resource
+   • Grammatical Range and Accuracy
+2. Equivalent CEFR level (A1–C2) and brief justification.
+3. Strengths (2–3 bullet points).
+4. Priority improvements (2–3 bullet points) with concrete rewrite suggestions.
+5. One sample upgraded sentence taken from my response.
+
+Be concise, honest, and specific. My response:
+---
+`;
+
+    copyTextBtn.addEventListener('click', () => {
+      copyResult.textContent = '';
+      copyResult.classList.remove('err');
+      copyModal.classList.add('open');
+    });
+    closeCopyModalBtn.addEventListener('click', () => copyModal.classList.remove('open'));
+    copyModal.addEventListener('click', (e) => { if (e.target === copyModal) copyModal.classList.remove('open'); });
+
+    document.getElementById('doCopy').addEventListener('click', async () => {
+      const taskLabel = currentTask === 'task1' ? 'IELTS Academic Writing Task 1' : 'IELTS Academic Writing Task 2';
+      const target = prompts[currentTask].target;
+      const body = editor.value || '';
+      const payload = includeAIPrompt.checked
+        ? AI_PROMPT_TEMPLATE(taskLabel, target) + body + '\n---'
+        : body;
+      try {
+        await navigator.clipboard.writeText(payload);
+        copyResult.textContent = '✓ Copied to clipboard';
+        setSaveStatus('copied');
+        setTimeout(() => copyModal.classList.remove('open'), 700);
+      } catch (err) {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = payload;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try {
+          document.execCommand('copy');
+          copyResult.textContent = '✓ Copied to clipboard';
+          setSaveStatus('copied');
+          setTimeout(() => copyModal.classList.remove('open'), 700);
+        } catch {
+          copyResult.classList.add('err');
+          copyResult.textContent = 'Copy failed — please copy manually.';
+        }
+        ta.remove();
+      }
+    });
+
+    // ===== Clear / reset =====
+    clearTextBtn.addEventListener('click', () => {
+      if (!confirm('Clear the current response? This cannot be undone.')) return;
+      editor.value = '';
+      updateStats();
+      localStorage.removeItem('ielts_pro_' + currentTask);
+      setSaveStatus('cleared');
+    });
+    resetAllBtn.addEventListener('click', () => {
+      if (!confirm('Reset everything? All saved responses will be cleared.')) return;
+      Object.keys(prompts).forEach(k => localStorage.removeItem('ielts_pro_' + k));
+      clearInterval(timerId); ticking = false;
+      clearInterval(stopwatchId); stopwatchRunning = false; stopwatchMs = 0; renderStopwatch();
+      loadTask('task1');
+      setSaveStatus('reset');
+    });
+
+    // Init
+    loadTask('task1');
+  </script>
+</body>
+</html>
